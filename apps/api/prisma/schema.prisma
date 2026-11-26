@@ -85,8 +85,9 @@ model Company {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users      User[]
-  candidates Candidate[]
+  users       User[]
+  invitations Invitation[]
+  candidates  Candidate[]
   templates  InterviewTemplate[]
   interviews Interview[]
   aiUsage    AiUsageLog[]
@@ -107,8 +108,28 @@ model User {
   refreshTokens RefreshToken[]
   reviews       Review[]
   createdTemplates InterviewTemplate[]
+  sentInvitations  Invitation[]
 
   @@index([companyId])
+}
+
+// Team member invite. The raw token is only shown once to the inviter; we store its hash.
+model Invitation {
+  id          String    @id @default(cuid())
+  companyId   String
+  email       String
+  role        UserRole
+  tokenHash   String    @unique
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invitedBy User    @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([companyId, email])
 }
 
 model RefreshToken {

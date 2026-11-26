@@ -45,7 +45,9 @@ Deepgram (STT) and ElevenLabs (TTS) are optional. Each is enabled only when its 
 
 ## Auth and tenancy
 
-- Access JWT (15 min) plus rotating refresh token in an httpOnly cookie. Refresh tokens are stored hashed.
+- Access JWT (HS256, 15 min) in the `Authorization` header, plus an opaque rotating refresh token (30 days) in an httpOnly, `SameSite=Strict` cookie scoped to `/api/auth`. Refresh tokens are stored as SHA-256 hashes. Presenting an already-rotated refresh token revokes every session of that user.
+- Each authenticated request reloads the user, so deactivation and role changes take effect immediately.
+- Team members join through single-use invite links (7 days, stored hashed). Only the owner can invite or manage admins. Invite emails are not sent yet; the inviter copies the link.
 - Every query is scoped by `companyId` taken from the verified token, never from request input.
 - Roles: `OWNER`, `ADMIN` (manage team and settings), `RECRUITER` (candidates, interviews), `REVIEWER` (review evaluations).
 - Candidates do not have accounts. They use an unguessable invite token (stored hashed) that grants access to one interview only.
