@@ -1,22 +1,30 @@
 # Development Checklist
 
-Legend: `[x]` done and verified here, `[ ]` not started. Live-API items stay in the "needs live verification" list until run with real keys.
+Legend:
+- `[x]` done and verified (compiled and tests pass)
+- `[~]` code written but NOT compiled or run yet
+- `[ ]` not started
+
+Live-API items stay in the "needs live verification" list until run with real keys.
+
+## Blocker (2026-11-26)
+The build sandbox runs in `INTEGRATIONS_ONLY` network mode, so `npm install` returns 403 for every package. Code written there could not be type-checked or tested. First step in an environment with npm access: `npm install && npm run db:generate && npm run typecheck && npm test`, then fix whatever fails and change `[~]` to `[x]`.
 
 ## Phase 0: Architecture
 - [x] Architecture doc
-- [x] Prisma schema (companies, users, candidates, templates, interviews, messages, evaluations, reviews, reports, AI usage)
-- [x] Monorepo scaffolding
-
-## Blocker (2026-11-26)
-The current sandbox runs in `INTEGRATIONS_ONLY` network mode, so `npm install` returns 403 for every package. Phase 1 cannot be built or tested here until dependencies can be installed.
+- [~] Prisma schema (companies, users, invitations, candidates, templates, interviews, messages, evaluations, reviews, reports, AI usage). Not yet checked with `prisma validate`.
+- [~] Monorepo scaffolding
 
 ## Phase 1: Backend foundation and auth
-- [ ] Env config with Zod validation
-- [ ] Logger, typed errors, error handler
-- [ ] Register (company + owner), login, refresh rotation, logout, `me`
-- [ ] Role-based authorization middleware
-- [ ] Team member invites (owner/admin)
-- [ ] Tests (in-memory store)
+- [~] Env config with Zod validation (`src/config/env.ts`)
+- [~] Logger with secret redaction, typed errors, error handler, request logger
+- [~] Register (company + owner), login, refresh rotation with reuse detection, logout, `me`
+- [~] Role-based authorization middleware
+- [~] Team member invites (owner/admin), role changes, deactivation
+- [~] Auth rate limiting
+- [~] Tests: `tests/auth.test.ts`, `tests/team.test.ts`, `tests/env.test.ts` (in-memory repository, no DB)
+- [ ] Invite emails (not implemented; inviter copies the link)
+- [ ] First Prisma migration (`npm run db:migrate -- --name init`)
 
 ## Phase 2: Recruiting domain
 - [ ] Candidates CRUD
