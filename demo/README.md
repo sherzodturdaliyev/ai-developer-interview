@@ -2,7 +2,20 @@
 
 Bazasiz, kutubxonasiz demo. AI bilan texnik intervyu o‘tkazib ko‘rish uchun. Faqat Node.js kerak, `npm install` shart emas.
 
-## Ishga tushirish
+## Eng oson yo‘l: bitta HTML fayl
+
+1. [`ai-interview.html`](ai-interview.html) faylini yuklab oling (GitHub’da faylni ochib, **Download raw file** tugmasini bosing).
+2. Uni **Chrome** yoki **Edge** brauzerida oching (faylni ikki marta bosing yoki brauzerga sudrab tashlang).
+3. «Gemini API kaliti» maydoniga kalitingizni kiriting (https://aistudio.google.com/apikey).
+4. «Intervyuni boshlash»ni bosing.
+
+Hech narsa o‘rnatish shart emas. Bu versiyada kalit sahifaning o‘ziga kiritiladi va brauzerdan to‘g‘ridan-to‘g‘ri Google’ga yuboriladi. Shuning uchun u **faqat o‘zingiz sinashingiz uchun**. Nomzodlarga kalitli sahifa bermang; buning uchun quyidagi server versiyasi kerak. HTML versiyada baholashni ham Gemini qiladi.
+
+Agar mikrofon fayldan ochilganda ishlamasa, server versiyasidan foydalaning (`http://localhost` orqali ochiladi).
+
+Faylni koddan qayta yig‘ish: `node build-html.mjs`.
+
+## Server versiyasi
 
 1. [Node.js](https://nodejs.org) 20.12 yoki undan yangisini o‘rnating.
 2. Kalitlarni sozlang:

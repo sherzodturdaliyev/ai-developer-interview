@@ -24,7 +24,11 @@ function showAlert(id, message, tone = "error") {
   box.classList.toggle("hidden", !message);
 }
 
+// In the single-file HTML build there is no server; the same handlers run in the page.
+const LOCAL_BACKEND = window.ADI_LOCAL_BACKEND ?? null;
+
 async function api(path, body) {
+  if (LOCAL_BACKEND) return LOCAL_BACKEND.request(path, body);
   let res;
   try {
     res = await fetch(path, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -152,7 +156,12 @@ async function loadStatus() {
     );
     const interviewReady = status.interview.some((p) => p.configured);
     const evaluationReady = status.evaluation.some((p) => p.configured);
-    if (!interviewReady) {
+    $("start-btn").disabled = false;
+    showAlert("setup-alert", "");
+    if (!interviewReady && LOCAL_BACKEND) {
+      showAlert("setup-alert", "Boshlash uchun Gemini API kaliti va modelini kiriting.", "info");
+      $("start-btn").disabled = true;
+    } else if (!interviewReady) {
       const missing = status.interview.flatMap((p) => p.missing);
       showAlert("setup-alert", `AI intervyuer sozlanmagan. demo/.env fayliga ${missing.join(", ")} qo‘shing va serverni qayta ishga tushiring. Oflayn yoki soxta intervyuer yo‘q.`);
       $("start-btn").disabled = true;
@@ -558,3 +567,4 @@ function renderReport(result) {
 
 updateVoiceNote();
 loadStatus();
+LOCAL_BACKEND?.onSettingsChange(loadStatus);
