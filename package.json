@@ -1,0 +1,15 @@
+{
+  "name": "ai-developer-interview",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "npm run dev -w @adi/api",
+    "dev:web": "npm run dev -w @adi/web",
+    "build": "npm run build -w @adi/api && npm run build -w @adi/web",
+    "test": "npm run test -w @adi/api",
+    "typecheck": "npm run typecheck -w @adi/api",
+    "db:migrate": "npm run db:migrate -w @adi/api",
+    "db:generate": "npm run db:generate -w @adi/api"
+  }
+}
