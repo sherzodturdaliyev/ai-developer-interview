@@ -1,6 +1,32 @@
 # Setup
 
-This file grows with each phase. It currently covers the backend foundation (Phase 1).
+This file grows with each phase. It currently covers the backend foundation (Phase 1) and the web UI for it.
+
+## Quick test with Docker (recommended)
+
+Needs only [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+1. Create `.env` in the repository root:
+   ```bash
+   cp .env.example .env
+   ```
+   Set `JWT_ACCESS_SECRET` to any random string of 32+ characters, for example the output of `openssl rand -hex 32`.
+2. Start everything:
+   ```bash
+   docker compose up --build
+   ```
+3. Open http://localhost:8080
+
+### What to try
+1. **Register** a company. You become its owner.
+2. Open **Team** and invite a colleague as Recruiter. Copy the invite link.
+3. Open the link in a private/incognito window, set a name and password. The new member appears in the team list.
+4. As the owner, change the member's role, deactivate them, and confirm they are signed out in the other window on their next action.
+5. Reload the page: you stay signed in (refresh cookie). Click the sign-out icon: you are signed out.
+
+Stop with `Ctrl+C`. `docker compose down -v` also deletes the database.
+
+## Local development without Docker
 
 ## Requirements
 - Node.js 20 or newer (developed against Node 22)
@@ -39,6 +65,7 @@ npm run db:migrate -- --name init
 ## 4. Run and test
 ```bash
 npm run dev:api        # http://localhost:4000/api/health
+npm run dev:web        # http://localhost:5173 (proxies /api to :4000)
 npm test               # Vitest, no database or network needed
 npm run typecheck
 ```
