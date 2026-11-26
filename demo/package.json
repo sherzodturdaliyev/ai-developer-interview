@@ -1,0 +1,13 @@
+{
+  "name": "ai-interview-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Dependency-free demo: AI technical interview by voice/text with a separate evaluation step",
+  "engines": { "node": ">=20.12" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "build:html": "node build-html.mjs"
+  }
+}
