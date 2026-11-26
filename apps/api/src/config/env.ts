@@ -27,6 +27,13 @@ export const envSchema = z
     BCRYPT_ROUNDS: opt(z.coerce.number().int().min(4).max(15).default(12)),
     AUTH_RATE_LIMIT: opt(z.coerce.number().int().min(1).default(50)),
     TRUST_PROXY: opt(z.coerce.number().int().min(0).max(10).default(0)),
+    // Defaults to true in production. Set "false" only for local testing over plain http.
+    COOKIE_SECURE: opt(
+      z
+        .enum(["true", "false"])
+        .transform((v) => v === "true")
+        .optional(),
+    ),
     LOG_LEVEL: opt(
       z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).default("info"),
     ),

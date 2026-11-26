@@ -55,8 +55,12 @@ The build sandbox runs in `INTEGRATIONS_ONLY` network mode, so `npm install` ret
 - [ ] Human review and overrides
 
 ## Phase 7: Frontend
-- [ ] App shell, auth, routing
-- [ ] HR dashboard, candidates, templates, interviews
+- [~] App shell (sidebar, mobile menu), routing, route guards
+- [~] Login, register, accept-invite pages; session restore via refresh cookie; refresh serialized across tabs
+- [~] Overview page (account, company, team stats for owner/admin)
+- [~] Team page (invite with copyable link, revoke, role change, deactivate/reactivate)
+- [~] Docker Compose for local testing (PostgreSQL + API + nginx-served web on :8080)
+- [ ] HR dashboard sections for candidates, templates, interviews
 - [ ] Candidate interview room (text, voice, optional camera preview)
 - [ ] Review and report views, history
 - [ ] Company analytics

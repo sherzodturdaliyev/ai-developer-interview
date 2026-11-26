@@ -22,7 +22,7 @@ function main(): void {
     authRepo: new PrismaAuthRepository(getPrisma()),
     config: {
       webOrigin: env.WEB_ORIGIN,
-      secureCookies: env.NODE_ENV === "production",
+      secureCookies: env.COOKIE_SECURE ?? env.NODE_ENV === "production",
       jwtAccessSecret: env.JWT_ACCESS_SECRET,
       bcryptRounds: env.BCRYPT_ROUNDS,
       authRateLimit: env.AUTH_RATE_LIMIT,
