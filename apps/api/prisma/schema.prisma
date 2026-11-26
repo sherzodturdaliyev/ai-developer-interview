@@ -1,0 +1,312 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────── Enums ─────────
+
+enum UserRole {
+  OWNER
+  ADMIN
+  RECRUITER
+  REVIEWER
+}
+
+enum InterviewMode {
+  TEXT
+  VOICE
+}
+
+enum InterviewStatus {
+  INVITED      // created, candidate has not started
+  IN_PROGRESS
+  COMPLETED    // candidate finished or time elapsed; awaiting evaluation
+  EVALUATING
+  EVALUATED    // AI evaluation stored, awaiting human review
+  REVIEWED     // human reviewer finalized
+  CANCELLED
+  EXPIRED
+}
+
+enum MessageRole {
+  INTERVIEWER
+  CANDIDATE
+  SYSTEM
+}
+
+enum MessageSource {
+  TEXT
+  VOICE_TRANSCRIPT
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  ADAPTIVE
+}
+
+enum Recommendation {
+  STRONG_HIRE
+  HIRE
+  NO_HIRE
+  STRONG_NO_HIRE
+  NEEDS_MORE_ASSESSMENT
+}
+
+enum ReviewStatus {
+  PENDING
+  IN_REVIEW
+  FINALIZED
+}
+
+enum AiTask {
+  INTERVIEW_TURN
+  QUESTION_GENERATION
+  ANSWER_ANALYSIS
+  TECHNICAL_EVALUATION
+  REPORT_GENERATION
+  SUMMARY
+  VOICE_SESSION
+  TRANSCRIPTION
+  SPEECH_SYNTHESIS
+}
+
+// ───────── Tenancy & auth ─────────
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  candidates Candidate[]
+  templates  InterviewTemplate[]
+  interviews Interview[]
+  aiUsage    AiUsageLog[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  companyId    String
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         UserRole
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  refreshTokens RefreshToken[]
+  reviews       Review[]
+  createdTemplates InterviewTemplate[]
+
+  @@index([companyId])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ───────── Recruiting ─────────
+
+model Candidate {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  email     String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  interviews Interview[]
+
+  @@unique([companyId, email])
+  @@index([companyId])
+}
+
+// Reusable interview configuration (the "interview context" inputs).
+model InterviewTemplate {
+  id                 String     @id @default(cuid())
+  companyId          String
+  createdById        String
+  title              String
+  jobPosition        String
+  seniority          String     // e.g. junior | mid | senior | lead
+  programmingLanguage String
+  technicalCategories String[]  // e.g. ["algorithms", "databases"]
+  durationMinutes    Int
+  difficulty         Difficulty
+  interviewLanguage  String     @default("en")
+  rules              String[]   // extra interviewer rules
+  evaluationCriteria Json       // [{key,label,description,weight}]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  archivedAt         DateTime?
+
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy  User        @relation(fields: [createdById], references: [id])
+  interviews Interview[]
+
+  @@index([companyId])
+}
+
+model Interview {
+  id          String          @id @default(cuid())
+  companyId   String
+  candidateId String
+  templateId  String
+  mode        InterviewMode
+  status      InterviewStatus @default(INVITED)
+  // Snapshot of the template at creation time so later edits never change history.
+  configSnapshot Json
+  accessTokenHash String      @unique // hash of the candidate invite token
+  expiresAt   DateTime
+  startedAt   DateTime?
+  endedAt     DateTime?
+  cameraConsent Boolean       @default(false)
+  // Rolling interviewer state: asked topics, current difficulty, question count.
+  state       Json            @default("{}")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  company    Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  candidate  Candidate         @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  template   InterviewTemplate @relation(fields: [templateId], references: [id])
+  messages   InterviewMessage[]
+  evaluation Evaluation?
+  report     Report?
+  aiUsage    AiUsageLog[]
+
+  @@index([companyId, status])
+  @@index([candidateId])
+}
+
+model InterviewMessage {
+  id          String        @id @default(cuid())
+  interviewId String
+  seq         Int
+  role        MessageRole
+  source      MessageSource @default(TEXT)
+  content     String
+  category    String?       // technical category the question belongs to
+  difficulty  String?
+  meta        Json?
+  createdAt   DateTime      @default(now())
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  @@unique([interviewId, seq])
+}
+
+// ───────── Evaluation & review ─────────
+
+// Produced by TechnicalEvaluationService, separate from the conversation.
+model Evaluation {
+  id            String         @id @default(cuid())
+  interviewId   String         @unique
+  provider      String
+  model         String
+  overallScore  Float          // 0-100
+  recommendation Recommendation
+  uncertainty   Json           // {level, reasons[]}
+  rawOutput     Json           // validated structured output as returned
+  reviewStatus  ReviewStatus   @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  interview Interview         @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  scores    CriterionScore[]
+  reviews   Review[]
+}
+
+model CriterionScore {
+  id           String  @id @default(cuid())
+  evaluationId String
+  criterionKey String
+  label        String
+  score        Float   // 0-10
+  weight       Float
+  rationale    String
+  // Quotes from candidate answers supporting the score: [{messageSeq, quote}]
+  evidence     Json
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  @@unique([evaluationId, criterionKey])
+}
+
+// Human reviewer decision. AI values are never overwritten; overrides live here.
+model Review {
+  id             String          @id @default(cuid())
+  evaluationId   String
+  reviewerId     String
+  overallScore   Float?
+  recommendation Recommendation?
+  criterionOverrides Json?       // [{criterionKey, score, note}]
+  notes          String?
+  finalized      Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  evaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  reviewer   User       @relation(fields: [reviewerId], references: [id])
+
+  @@index([evaluationId])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  interviewId String   @unique
+  provider    String
+  model       String
+  content     Json     // validated structured report
+  createdAt   DateTime @default(now())
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+}
+
+// ───────── AI usage & cost ─────────
+
+model AiUsageLog {
+  id               String   @id @default(cuid())
+  companyId        String
+  interviewId      String?
+  provider         String   // gemini | deepseek | elevenlabs | deepgram
+  model            String
+  task             AiTask
+  success          Boolean
+  attempts         Int      @default(1)
+  fallbackFrom     String?  // provider that failed before this one served the request
+  promptTokens     Int?
+  completionTokens Int?
+  totalTokens      Int?
+  audioSeconds     Float?
+  estimatedCostUsd Float?
+  latencyMs        Int
+  errorCode        String?
+  createdAt        DateTime @default(now())
+
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  interview Interview? @relation(fields: [interviewId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([interviewId])
+}
