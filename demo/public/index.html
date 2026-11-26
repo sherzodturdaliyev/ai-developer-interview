@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Developer Interview · Demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">AI</span>
+        <span class="brand-name">Developer Interview</span>
+        <span class="tag">Demo</span>
+      </div>
+      <div id="provider-status" class="provider-status" aria-live="polite"></div>
+    </header>
+
+    <!-- ───────── Sozlash ───────── -->
+    <main id="screen-setup" class="screen">
+      <section class="hero">
+        <h1>AI bilan texnik intervyu o‘tkazing</h1>
+        <p>
+          Lavozimni sozlang, so‘ng AI intervyuer bilan ovoz yoki matn orqali suhbatlashing. Intervyudan keyin alohida
+          baholash bosqichi javoblarni baholaydi va har bir bahoga suhbatdan iqtibos keltiradi.
+        </p>
+      </section>
+
+      <div id="setup-alert" class="alert hidden" role="alert"></div>
+
+      <form id="setup-form" class="card form-grid" novalidate>
+        <div class="field span-2">
+          <label for="position">Lavozim</label>
+          <input id="position" name="position" required value="Backend Developer" maxlength="100" />
+        </div>
+        <div class="field">
+          <label for="seniority">Daraja</label>
+          <select id="seniority" name="seniority">
+            <option value="junior">Junior</option>
+            <option value="middle" selected>Middle</option>
+            <option value="senior">Senior</option>
+            <option value="lead">Lead</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="programmingLanguage">Dasturlash tili</label>
+          <input id="programmingLanguage" name="programmingLanguage" required value="JavaScript" maxlength="50" />
+        </div>
+        <div class="field span-2">
+          <label for="categories">Texnik yo‘nalishlar <span class="muted">(vergul bilan ajrating)</span></label>
+          <input id="categories" name="categories" required value="Algoritmlar, Ma'lumotlar bazasi, REST API, Asinxron dasturlash" />
+        </div>
+        <div class="field">
+          <label for="durationMinutes">Davomiyligi</label>
+          <select id="durationMinutes" name="durationMinutes">
+            <option value="5">5 daqiqa</option>
+            <option value="10" selected>10 daqiqa</option>
+            <option value="15">15 daqiqa</option>
+            <option value="20">20 daqiqa</option>
+            <option value="30">30 daqiqa</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="difficulty">Qiyinlik</label>
+          <select id="difficulty" name="difficulty">
+            <option value="adaptive" selected>Moslashuvchan</option>
+            <option value="easy">Oson</option>
+            <option value="medium">O‘rtacha</option>
+            <option value="hard">Qiyin</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="language">Intervyu tili</label>
+          <select id="language" name="language">
+            <option value="uz" selected>O‘zbek</option>
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mode">Javob berish usuli</label>
+          <select id="mode" name="mode">
+            <option value="voice" selected>Ovoz (gapirish va tinglash)</option>
+            <option value="text">Faqat matn</option>
+          </select>
+        </div>
+        <div class="field span-2">
+          <label for="rules">Intervyuer uchun qo‘shimcha qoidalar <span class="muted">(ixtiyoriy)</span></label>
+          <textarea id="rules" name="rules" rows="2" maxlength="1000" placeholder="Masalan: Node.js bilan amaliy tajribaga e’tibor bering"></textarea>
+        </div>
+        <label class="check span-2">
+          <input type="checkbox" id="camera" name="camera" />
+          <span>
+            Kamerani yoqish
+            <span class="muted block">Tasvir faqat sizning ekraningizda ko‘rinadi. Video yozib olinmaydi, yuborilmaydi va AI tomonidan tahlil qilinmaydi.</span>
+          </span>
+        </label>
+        <div id="voice-note" class="note span-2"></div>
+        <div class="actions span-2">
+          <button type="submit" id="start-btn" class="btn btn-primary">Intervyuni boshlash</button>
+        </div>
+      </form>
+    </main>
+
+    <!-- ───────── Intervyu xonasi ───────── -->
+    <main id="screen-room" class="screen hidden">
+      <div class="room">
+        <section class="stage card">
+          <div class="stage-top">
+            <div>
+              <p id="room-title" class="eyebrow"></p>
+              <p id="room-subtitle" class="muted small"></p>
+            </div>
+            <div id="timer" class="timer" aria-live="off">00:00</div>
+          </div>
+
+          <div class="stage-media">
+            <div id="ai-orb" class="orb" aria-hidden="true"><span></span></div>
+            <p id="ai-state" class="ai-state">Ulanmoqda…</p>
+            <div class="self-view">
+              <video id="self-video" autoplay muted playsinline class="hidden"></video>
+              <div id="self-placeholder" class="self-placeholder">Kamera o‘chiq</div>
+            </div>
+          </div>
+
+          <div class="composer">
+            <textarea id="answer" rows="3" placeholder="Javobingiz…" aria-label="Javobingiz"></textarea>
+            <div class="composer-actions">
+              <button type="button" id="mic-btn" class="btn btn-secondary hidden">🎙 Gapirish</button>
+              <label class="check small hidden" id="autosend-wrap">
+                <input type="checkbox" id="autosend" checked />
+                <span>Gapirib bo‘lgach avtomatik yuborish</span>
+              </label>
+              <span class="spacer"></span>
+              <button type="button" id="send-btn" class="btn btn-primary">Javobni yuborish</button>
+            </div>
+          </div>
+          <div id="room-alert" class="alert hidden" role="alert"></div>
+          <div class="room-footer">
+            <span class="muted small">Intervyuerni istalgan payt to‘xtatish uchun «Gapirish»ni bosing yoki yoza boshlang.</span>
+            <button type="button" id="end-btn" class="btn btn-ghost">Intervyuni tugatish va baholash</button>
+          </div>
+        </section>
+
+        <aside class="transcript card">
+          <h2>Suhbat matni</h2>
+          <ol id="transcript" class="messages"></ol>
+        </aside>
+      </div>
+    </main>
+
+    <!-- ───────── Hisobot ───────── -->
+    <main id="screen-report" class="screen hidden">
+      <div id="report-loading" class="card center">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Intervyu matni baholanmoqda…</p>
+        <p class="muted small">Baholash intervyuer suhbatidan alohida bajariladi.</p>
+      </div>
+      <div id="report-alert" class="alert hidden" role="alert"></div>
+      <div id="report" class="hidden"></div>
+    </main>
+  </body>
+</html>
